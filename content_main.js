@@ -4,6 +4,7 @@ $(init);
 
 function init(){
 	console.log("init");
+	cache_card_effect();
 	//append_control_panel();
 	inject_css();
 	inject_mass_parts();
@@ -11,10 +12,70 @@ function init(){
 	load_card_image();
 }
 
+function cache_card_effect(){
+	var card_name = get_card_name();
+	if(card_name && card_name.length > 0){
+		var effect_pre = $("#body > pre");
+		if(effect_pre.size() > 0){
+			var effect_text = effect_pre.text();
+			localStorage["effect:" + card_name] = effect_text;
+			console.log("card effect cached: " + card_name);
+		}
+	}
+}
+
+function rip_card_name(txt){
+	var result = "";
+	if(txt){
+		var start_pos = txt.indexOf(unescape("%u300a"));
+		var end_pos = txt.indexOf(unescape("%u300b"));
+		if(start_pos >= 0 && end_pos >= 0){
+			result = txt.substr(start_pos + 1, end_pos - start_pos - 1);
+		}
+	}
+	return result;
+}
+
+function check_card_effect(){
+	//console.log("check card effect");
+	var card_name = rip_card_name($(this).text());
+	if(localStorage["effect:" + card_name]){
+		var effect = localStorage["effect:" + card_name];
+		console.log(card_name + ": " + effect);
+		var card_div = $("<div></div>");
+		card_div.attr("id", "card_effect_div");
+		card_div.addClass("card_effect_div");
+		var offset = $(this).offset();
+		var div_left = offset.left;
+		var div_top = offset.top + 40;
+		card_div.css("left", div_left+"px");
+		card_div.css("top", div_top+"px");
+		card_div.html("<pre>"+effect+"</pre>");
+		$("body").append(card_div);
+	}
+}
+
+function hide_card_effect(){
+	//console.log("hide card effect");
+	$("#card_effect_div").remove();
+}
+
 function bind_events(){
 	$("#helper_title").click(toggle_help_content);
 	$('"div[id^="helper_command_"]').addClass("helper_command");
 	$("#helper_command_search_image").click(search_image);
+	var card_link_count = 0;
+	var card_string = "";
+	$("a").each(function(){
+		var card_name = rip_card_name($(this).text());
+		if(card_name.length > 0){
+			$(this).hover(check_card_effect, hide_card_effect);
+			card_link_count++;
+			card_string += card_name + ", ";
+		}
+	});
+	console.log("card link event bind: " + card_link_count);
+	console.log(card_string);
 }
 
 function inject_mass_parts(){
@@ -211,6 +272,15 @@ function content_css(){
 	border-color: #666;
 	margin: 5px;
 	padding: 5px;
+}
+.card_effect_div {
+	display: block;
+	position: absolute;
+	z-index: 1000;
+	border-style: solid;
+	border-width: 2;
+	border-color: #C88;
+	background-color: #88C;
 }
 </style>
 	*/
