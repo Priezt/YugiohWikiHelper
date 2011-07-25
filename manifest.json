@@ -1,12 +1,13 @@
 {
 	"name": "YuGiOh Wiki Helper",
-	"version": "1.2",
+	"version": "1.5",
 	"description": "yugioh-wiki.netの機能を強化する",
 	"permissions": [
 		"http://*/*",
 		"https://*/*",
 		"tabs",
-		"notifications"
+		"notifications",
+		"contextMenus"
 	],
 	"content_scripts": [
 		{
