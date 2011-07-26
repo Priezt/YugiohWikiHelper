@@ -1,5 +1,6 @@
 var helper_content_visible = false;
 var favorite_card_div_visible = false;
+var deck_list_div_visible = false;
 
 $(init);
 
@@ -10,6 +11,7 @@ function init(){
 	inject_css();
 	inject_mass_parts();
 	inject_favorite_card_list();
+	inject_deck_list();
 	bind_events();
 	load_card_image();
 }
@@ -30,6 +32,63 @@ function inject_favorite_card_list(){
 	create_favorite_card_list_div().insertAfter($("#navigator"));
 }
 
+function inject_deck_list(){
+	console.log("inject deck list");
+	var splitter = $("<font> | </font>");
+	console.log("last link: " + $("#navigator a:last").text());
+	splitter.insertAfter($("#navigator a:last"));
+	var deck_list_link = $("<a></a>").text(STR_DECK_LIST).attr("href", "#").click(function(event){
+		toggle_deck_list_div();
+		event.preventDefault();
+	});
+	deck_list_link.insertAfter(splitter);
+	create_deck_list_div().insertAfter($("#navigator"));
+}
+
+function create_deck_list_div(){
+	return $("<div></div>").attr("id", "deck_list").hide();
+}
+
+function load_deck_list(){
+	chrome.extension.sendRequest({'func': 'deck_list'}, function(response){
+		$("#deck_list").empty();
+		var deck_list = JSON.parse(response.result);
+		for(var c=0;c<deck_list.length;c++){
+			var card_name = deck_list[c];
+			var card_link = $("<a></a>").text("["+card_name+"]").attr("href", "#");
+			$("#deck_list").append(card_link);
+			var delete_button = $("<div>" + STR_CLOSE + "</div>").addClass("delete_button").click(get_deck_delete_button_func(c));
+			$("#deck_list").append(delete_button);
+			if(c != deck_list.length - 1){
+				$("#deck_list").append($("<br>"));
+			}
+		}
+		$("#deck_list a").each(bind_deck_link);
+	});
+}
+
+function get_deck_delete_button_func(c){
+	//todo
+}
+
+function bind_deck_link(event){
+	//todo
+	event.preventDefault();
+}
+
+function toggle_deck_list_div(){
+	if(deck_list_div_visible){
+		deck_list_div_visible = false;
+		$("#deck_list").hide();
+	}else{
+		deck_list_div_visible = true;
+		$("#deck_list").empty();
+		$("#deck_list").append($("<progress></progress>"));
+		$("#deck_list").show();
+		load_deck_list();
+	}
+}
+
 function toggle_favorite_card_list_div(){
 	if(favorite_card_div_visible){
 		favorite_card_div_visible = false;
@@ -43,6 +102,22 @@ function toggle_favorite_card_list_div(){
 	}
 }
 
+function get_delete_button_func(idx){
+	var result = function(){
+		var indx = idx;
+		console.log("delete favorite at index: " + indx);
+		chrome.extension.sendRequest({'func': 'delete_favorite', 'index': indx}, function(response){
+			reload_favorite_card_list();
+		});
+	};
+	return result;
+}
+
+function reload_favorite_card_list(){
+		$("#favorite_card_list").empty();
+		load_favorite_card_list();
+}
+
 function load_favorite_card_list(){
 	chrome.extension.sendRequest({'func': 'favorite_card_list'}, function(response){
 		$("#favorite_card_list").empty();
@@ -53,10 +128,35 @@ function load_favorite_card_list(){
 			card_link.text(unescape("%u300a") + card_name + unescape("%u300b"));
 			card_link.attr("href", localStorage['link:'+card_name]);
 			$("#favorite_card_list").append(card_link);
-			$("#favorite_card_list").append($("<font>&nbsp;&nbsp;&nbsp;</font>"));
+			var delete_button = $("<div>" + STR_CLOSE + "</div>");
+			delete_button.addClass("delete_button");
+			delete_button.click(get_delete_button_func(c));
+			$("#favorite_card_list").append(delete_button);
+			if(c != favorite_card_list.length - 1){
+				$("#favorite_card_list").append($("<br>"));
+			}
 		}
 		$("#favorite_card_list a").each(bind_link);
+		$("#favorite_card_list").append($("<hr>"));
+		$("#favorite_card_list").append($("<input type=\"text\" size=\"20\">").attr("id", "saved_deck_name"));
+		$("#favorite_card_list").append($("<input type=\"button\">").val(STR_SAVE_DECK).click(function (){
+			if($("#saved_deck_name").val().length > 0){
+				console.log("save deck: " + $("#saved_deck_name").val());
+				chrome.extension.sendRequest({'func': 'save_deck', 'name': $("#saved_deck_name").val()}, function(response){
+					notify_div(STR_SAVED);
+				});
+			}
+		}));
 	});
+}
+
+function notify_div(msg){
+	console.log("notify: " + msg);
+	$("#notify_div").remove();
+	var div = $("<div>"+msg+"</div>").attr("id", "notify_div");
+	div.hide();
+	$("body").append(div);
+	div.show("slow").delay(2000).hide("slow");
 }
 
 function create_favorite_card_list_div(){
@@ -119,7 +219,7 @@ function bind_link(){
 	if(card_name.length > 0){
 		$(this).hover(check_card_effect, hide_card_effect);
 		$(this).click(click_card_link);
-		localStorage["link:"+card_name] = $(this).attr("href");
+		localStorage["link:"+card_name] = $(this).attr("href").replace(/plugin=related&page=/, "");
 		//card_link_count++;
 		//card_string += card_name + ", ";
 	}
@@ -405,13 +505,35 @@ function content_css(){
 	border-color: #C88;
 	background-color: #FF0;
 }
+#deck_list {
+	display: block;
+	border-style: solid;
+	border-width: 2;
+	border-color: #CCC;
+	margin: 5px;
+	padding: 2px;
+}
 #favorite_card_list {
 	display: block;
 	border-style: solid;
 	border-width: 2;
-	border-color: #444;
+	border-color: #CCC;
 	margin: 5px;
 	padding: 2px;
+}
+.delete_button {
+	display: inline-block;
+	cursor: pointer;
+	margin: 1px;
+}
+#notify_div {
+	display: block;
+	position: fixed;
+	background-color: #8C8;
+	text-align: center;
+	width: 100%;
+	top: 0px;
+	left: 0px;
 }
 </style>
 	*/

@@ -135,7 +135,41 @@ function request_handler(req, sender, send_response){
 			result = localStorage["favorite_list"];
 		}
 		send_response({'result':result});
+	}else if(req.func == 'deck_list'){
+		var result = "[]";
+		if(localStorage["decks"]){
+			result = localStorage["decks"];
+		}
+		send_response({'result':result});
+	}else if(req.func == 'delete_favorite'){
+		if(localStorage["favorite_list"]){
+			var fl = JSON.parse(localStorage["favorite_list"]);
+			console.log("delete favorite: " + fl[req.index]);
+			fl.splice(req.index, 1);
+			localStorage["favorite_list"] = JSON.stringify(fl);
+		}
+		send_response({'result':'nothing'});
+	}else if(req.func == 'save_deck'){
+		var fl = new Array();
+		if(localStorage["favorite_list"]){
+			var fl = JSON.parse(localStorage["favorite_list"]);
+		}
+		localStorage["deck:" + req.name] = JSON.stringify(fl);
+		console.log("save deck: " + req.name);
+		add_deck(req.name);
+		send_response({'result':'nothing'});
 	}
+}
+
+function add_deck(deck_name){
+	var decks = new Array();
+	if(localStorage['decks']){
+		decks = JSON.parse(localStorage['decks']);
+	}
+	if($.inArray(deck_name, decks) < 0){
+		decks.push(deck_name);
+	}
+	localStorage['decks'] = JSON.stringify(decks);
 }
 
 function checkForValidUrl(tabId, changeInfo, tab){
