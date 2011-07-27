@@ -64,16 +64,36 @@ function load_deck_list(){
 			}
 		}
 		$("#deck_list a").each(bind_deck_link);
+		if(deck_list.length == 0){
+			$("#deck_list").append($("<div>"+STR_EMPTY+"</div>"));
+		}
 	});
 }
 
 function get_deck_delete_button_func(c){
-	//todo
+	var result = function(){
+		var indx = c;
+		console.log("delete deck at index: " + indx);
+		chrome.extension.sendRequest({'func': 'delete_deck', 'index': indx}, function(response){
+			reload_deck_list();
+		});
+	};
+	return result;
 }
 
-function bind_deck_link(event){
-	//todo
-	event.preventDefault();
+function bind_deck_link(){
+	$(this).click(function(event){
+		var deck_name = $(this).text().replace(/^\[/, '').replace(/\]$/, '');
+		load_deck(deck_name);
+		event.preventDefault();
+	});
+}
+
+function load_deck(deck_name){
+	hide_all_control_div();
+	chrome.extension.sendRequest({'func': 'load_deck', 'name': deck_name}, function(response){
+		toggle_favorite_card_list_div();
+	});
 }
 
 function toggle_deck_list_div(){
@@ -81,6 +101,7 @@ function toggle_deck_list_div(){
 		deck_list_div_visible = false;
 		$("#deck_list").hide();
 	}else{
+		hide_all_control_div();
 		deck_list_div_visible = true;
 		$("#deck_list").empty();
 		$("#deck_list").append($("<progress></progress>"));
@@ -89,11 +110,19 @@ function toggle_deck_list_div(){
 	}
 }
 
+function hide_all_control_div(){
+	deck_list_div_visible = false;
+	$("#deck_list").hide();
+	favorite_card_div_visible = false;
+	$("#favorite_card_list").hide();
+}
+
 function toggle_favorite_card_list_div(){
 	if(favorite_card_div_visible){
 		favorite_card_div_visible = false;
 		$("#favorite_card_list").hide();
 	}else{
+		hide_all_control_div();
 		favorite_card_div_visible = true;
 		$("#favorite_card_list").empty();
 		$("#favorite_card_list").append($("<progress></progress>"));
@@ -111,6 +140,11 @@ function get_delete_button_func(idx){
 		});
 	};
 	return result;
+}
+
+function reload_deck_list(){
+		$("#deck_list").empty();
+		load_deck_list();
 }
 
 function reload_favorite_card_list(){
@@ -137,6 +171,9 @@ function load_favorite_card_list(){
 			}
 		}
 		$("#favorite_card_list a").each(bind_link);
+		if(favorite_card_list.length == 0){
+			$("#favorite_card_list").append($("<div>"+STR_EMPTY+"</div>"));
+		}
 		$("#favorite_card_list").append($("<hr>"));
 		$("#favorite_card_list").append($("<input type=\"text\" size=\"20\">").attr("id", "saved_deck_name"));
 		$("#favorite_card_list").append($("<input type=\"button\">").val(STR_SAVE_DECK).click(function (){
@@ -509,7 +546,7 @@ function content_css(){
 	display: block;
 	border-style: solid;
 	border-width: 2;
-	border-color: #CCC;
+	border-color: #8C8;
 	margin: 5px;
 	padding: 2px;
 }
@@ -517,7 +554,7 @@ function content_css(){
 	display: block;
 	border-style: solid;
 	border-width: 2;
-	border-color: #CCC;
+	border-color: #8C8;
 	margin: 5px;
 	padding: 2px;
 }

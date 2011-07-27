@@ -149,6 +149,14 @@ function request_handler(req, sender, send_response){
 			localStorage["favorite_list"] = JSON.stringify(fl);
 		}
 		send_response({'result':'nothing'});
+	}else if(req.func == 'delete_deck'){
+		if(localStorage["decks"]){
+			var dl = JSON.parse(localStorage["decks"]);
+			console.log("delete deck: " + dl[req.index]);
+			dl.splice(req.index, 1);
+			localStorage["decks"] = JSON.stringify(dl);
+		}
+		send_response({'result':'nothing'});
 	}else if(req.func == 'save_deck'){
 		var fl = new Array();
 		if(localStorage["favorite_list"]){
@@ -157,6 +165,13 @@ function request_handler(req, sender, send_response){
 		localStorage["deck:" + req.name] = JSON.stringify(fl);
 		console.log("save deck: " + req.name);
 		add_deck(req.name);
+		send_response({'result':'nothing'});
+	}else if(req.func == 'load_deck'){
+		var deck_name = req.name;
+		if(localStorage["deck:" + deck_name]){
+			console.log("load deck: " + deck_name);
+			localStorage["favorite_list"] = localStorage["deck:" + req.name];
+		}
 		send_response({'result':'nothing'});
 	}
 }
