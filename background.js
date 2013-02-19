@@ -66,9 +66,13 @@ function add_to_favorite(card_name, url){
 	localStorage['favorite_list'] = JSON.stringify(favorite_list);
 }
 
+function clear_card_link_url(url){
+	return url.replace(/plugin=related\&/, "").replace(/page=/, "");
+}
+
 function favorite_card_click(info, tab){
 	//console.log(info);
-	get_card_name_by_url(info.linkUrl.toString());
+	get_card_name_by_url(clear_card_link_url(info.linkUrl.toString()));
 }
 
 function load_google_api(){
@@ -88,6 +92,26 @@ function request_handler(req, sender, send_response){
 			data = fetch_html(data);
 			//console.log(data);
 			send_response({'result': data});
+		});
+	}else if(req.func == "bing_search_image"){
+		console.log("bing search image: " + req.card_name);
+		var keyword = req.card_name + "+" + STR_YUGIOH;
+		console.log("keyword: " + keyword);
+		var url = "http://www.bing.com/images/search?q=" + keyword;
+		console.log("url: " + url);
+		$.get(url, function(data){
+			data = fetch_html(data);
+			html = $(data);
+			//console.log(data);
+			result = new Array();
+			html.find("img[class='sg_t']").slice(0,10).each(function(){
+				var imgsrc = $(this).attr("src").toString().replace(/^.*\&url=/, "");
+				console.log("before unescape: " + imgsrc);
+				imgsrc = unescape(imgsrc);
+				console.log("after unescape: " + imgsrc);
+				result.push(imgsrc);
+			});
+			send_response({'result': result});
 		});
 	}else if(req.func == 'google_search_image'){
 		console.log("google search image: " + req.card_name);
@@ -117,6 +141,7 @@ function request_handler(req, sender, send_response){
 			var img_list = new Array();
 			console.log("image search callback");
 			//console.log(JSON.stringify(searcher));
+			console.log(searcher);
 			if(searcher.results && searcher.results.length > 0){
 				for(var i=0;i<4;i++){
 					var result = searcher.results[i];
@@ -141,6 +166,9 @@ function request_handler(req, sender, send_response){
 			result = localStorage["decks"];
 		}
 		send_response({'result':result});
+	}else if(req.func == 'reset_favorite'){
+		localStorage["favorite_list"] = JSON.stringify([]);
+		send_response({'result':'nothing'});
 	}else if(req.func == 'delete_favorite'){
 		if(localStorage["favorite_list"]){
 			var fl = JSON.parse(localStorage["favorite_list"]);

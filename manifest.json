@@ -1,6 +1,6 @@
 {
 	"name": "YuGiOh Wiki Helper",
-	"version": "1.6",
+	"version": "1.8",
 	"description": "yugioh-wiki.netの機能を強化する",
 	"permissions": [
 		"http://*/*",

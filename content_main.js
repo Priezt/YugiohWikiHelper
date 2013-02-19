@@ -184,6 +184,12 @@ function load_favorite_card_list(){
 				});
 			}
 		}));
+		$("#favorite_card_list").append($("<input type=\"button\">").val(STR_RESET).click(function(){
+			console.log("clear favorite");
+			chrome.extension.sendRequest({'func': 'reset_favorite'}, function(response){
+				reload_favorite_card_list();
+			});
+		}));
 	});
 }
 
@@ -395,12 +401,15 @@ function search_image(){
 		});
 		*/
 		var data = {
-			'func': 'google_search_image',
+			//'func': 'google_search_image',
+			'func': 'bing_search_image',
 			'card_name': card_name
 		};
 		chrome.extension.sendRequest(data, function(response){
-			console.log(response.result);
-			img_list = JSON.parse(response.result);
+			var response_result = response.result;
+			console.log(response_result);
+			//var img_list = JSON.parse(response_result);
+			var img_list = eval(response_result);
 			var imgsrc_array = new Array();
 			for(var i=0;i<img_list.length;i++){
 				imgsrc_array.push(img_list[i]);
@@ -412,6 +421,7 @@ function search_image(){
 }
 
 function show_result_image(imgsrc_array){
+	console.log("show result image");
 	$("#card_image_container").empty();
 	$("#card_image_container").show();
 	$("#card_image_container").append($("<div>"+STR_CHOOSE_IMAGE+":</div>"));

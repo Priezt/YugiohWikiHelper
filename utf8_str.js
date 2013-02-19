@@ -8,3 +8,4 @@ var STR_SAVE_DECK = "デッキとしてセーブ";
 var STR_SAVED = "セーブしました";
 var STR_DECK_LIST = "デッキリスト";
 var STR_EMPTY = "なし";
+var STR_RESET = "リセット";
